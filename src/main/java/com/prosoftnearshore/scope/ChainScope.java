@@ -4,6 +4,11 @@ import org.eclipse.jdt.annotation.Nullable;
 
 public class ChainScope implements Scope {
 
+	/**
+	 * Construct and return a new instance of {@link ChainScope}.
+	 * 
+	 * @return a new instance of {@code ChainScope}.
+	 */
 	public static ChainScope getNew() {
 		return new ChainScope();
 	}
@@ -63,7 +68,7 @@ public class ChainScope implements Scope {
 		assert resource == this.hooked : String.format(
 				"Attempted to release %s, but what was actually hooked was %s",
 				resource, this.hooked);
-		
+
 		this.hooked = null;
 		return resource;
 	}
@@ -89,30 +94,3 @@ public class ChainScope implements Scope {
 	}
 
 }
-//
-// public <T extends AutoCloseable> T release(T o) {
-// assert o == this.hooked : String.format(
-// "Attempted to release %s, but what was actually hooked was %s",
-// o, ChainScope.this.hooked);
-//
-// this.hooked = null;
-// return o;
-// }
-//
-// public class NotHookedException extends AssertionError {
-//
-// private NotHookedException(AutoCloseable o) {
-// super();
-// }
-// }
-//
-// //
-// // Private members
-// //
-// private AutoCloseable hooked = null;
-//
-// // hide default constructor from clients
-// private ChainScope() {
-// }
-//
-// }
