@@ -1,11 +1,5 @@
-/**
- * 
- */
 package com.prosoftnearshore.scope;
 
-/**
- *
- */
 public interface Scope extends AutoCloseable {
 
 	/**

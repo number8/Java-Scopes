@@ -5,6 +5,7 @@ import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.*;
 
 import java.io.BufferedReader;
+import java.io.Closeable;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -12,8 +13,11 @@ import java.io.Reader;
 import java.nio.charset.StandardCharsets;
 import java.util.function.Function;
 
+import org.eclipse.jdt.annotation.Nullable;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
+import org.mockito.invocation.InvocationOnMock;
+import org.mockito.stubbing.Answer;
 
 /**
  *
@@ -172,14 +176,6 @@ public class ScopeTests {
 	}
 
 	/**
-	 * A functional interface for the BufferedReader factory method.
-	 */
-	interface NewBufferedReader extends Function<Reader, BufferedReader> {
-		@Override
-		public BufferedReader apply(Reader t);
-	}
-
-	/**
 	 * Illustrates how {@link #unsafeGetReader(String, NewBufferedReader)} does
 	 * fail to close resources it creates internally when a failure strikes half
 	 * way through. If it weren't for the mocking infrastructure, there's
@@ -196,17 +192,30 @@ public class ScopeTests {
 				evilReaderFactory);) {
 			fail("Should have thrown!");
 		} catch (RuntimeException e) {
-			ArgumentCaptor<InputStreamReader> readerArgument = ArgumentCaptor
-					.forClass(InputStreamReader.class);
-
-			verify(evilReaderFactory).apply(readerArgument.capture());
-			// The reader is still open, so ensure it's closed after
-			// assertion is done
-			try (InputStreamReader reader = readerArgument.getValue();) {
-				assertTrue(readerArgument.getValue().ready());
-			}
+			assertThatLeakedTheReaderPassedTo(evilReaderFactory);
 		}
 
+	}
+
+	/**
+	 * A functional interface for the BufferedReader factory method.
+	 */
+	interface NewBufferedReader extends Function<Reader, BufferedReader> {
+		@Override
+		public BufferedReader apply(Reader t);
+	}
+
+	private static void assertThatLeakedTheReaderPassedTo(
+			final NewBufferedReader mockedReaderFactory) throws IOException {
+		ArgumentCaptor<InputStreamReader> readerArgument = ArgumentCaptor
+				.forClass(InputStreamReader.class);
+
+		verify(mockedReaderFactory).apply(readerArgument.capture());
+		// The reader is still open, so ensure it's closed after
+		// assertion is done
+		try (InputStreamReader reader = readerArgument.getValue();) {
+			assertTrue(readerArgument.getValue().ready());
+		}
 	}
 
 	/**
@@ -272,19 +281,24 @@ public class ScopeTests {
 		try (BufferedReader br = uglyGetReader(RESOURCE_TXT, evilReaderFactory);) {
 			fail("Should have thrown!");
 		} catch (RuntimeException e) {
-			ArgumentCaptor<InputStreamReader> readerArgument = ArgumentCaptor
-					.forClass(InputStreamReader.class);
-
-			verify(evilReaderFactory).apply(readerArgument.capture());
-			try (InputStreamReader reader = readerArgument.getValue();) {
-				assertTrue(readerArgument.getValue().ready());
-				fail("Hey, reader should have been closed already!");
-			} catch (IOException e2) {
-				// All is good: we expected that reader would be closed and that
-				// ready() would throw.
-			}
+			assertThatIsClosedTheReaderPassedTo(evilReaderFactory);
 		}
 
+	}
+
+	private static void assertThatIsClosedTheReaderPassedTo(
+			final NewBufferedReader factoryMock) {
+		ArgumentCaptor<InputStreamReader> readerArgument = ArgumentCaptor
+				.forClass(InputStreamReader.class);
+
+		verify(factoryMock).apply(readerArgument.capture());
+		try (InputStreamReader reader = readerArgument.getValue();) {
+			assertTrue(readerArgument.getValue().ready());
+			fail("Hey, reader should have been closed already!");
+		} catch (IOException e2) {
+			// All is good: we expected that reader would be closed and that
+			// ready() would throw.
+		}
 	}
 
 	/**
@@ -381,17 +395,216 @@ public class ScopeTests {
 		try (BufferedReader br = easyGetReader(RESOURCE_TXT, evilReaderFactory);) {
 			fail("Should have thrown!");
 		} catch (RuntimeException e) {
-			ArgumentCaptor<InputStreamReader> readerArgument = ArgumentCaptor
-					.forClass(InputStreamReader.class);
+			assertThatIsClosedTheReaderPassedTo(evilReaderFactory);
+		}
 
-			verify(evilReaderFactory).apply(readerArgument.capture());
-			try (InputStreamReader reader = readerArgument.getValue();) {
-				assertTrue(readerArgument.getValue().ready());
-				fail("Hey, reader should have been closed already!");
-			} catch (IOException e2) {
-				// All is good: we expected that reader would be closed and that
-				// ready() would throw.
+	}
+
+	/**
+	 * Now lets say we want to create a class that wraps two or more resources
+	 * to be used together. That wrapper itself must be an AutoCloseable which,
+	 * quite likely, will be a) initializing the inner resources in its
+	 * constructor and b) will have to ensure they're all closed when its close
+	 * method is called.
+	 * <p>
+	 * 
+	 * But it is not enough to close the resources when {@link #close()} is
+	 * called: if the constructor can throw, in particular, it should be very
+	 * careful of not leaking resources that may have been initialized just
+	 * before throwing.
+	 */
+	class UnsafeReadersWrapper implements Closeable {
+		BufferedReader br;
+		BufferedReader br2;
+
+		UnsafeReadersWrapper(NewBufferedReader bufferedReaderFactory1,
+				NewBufferedReader bufferedReaderFactory2) {
+			this.br = easyGetReader(RESOURCE_TXT, bufferedReaderFactory1);
+			this.br2 = easyGetReader(OTHER_RESOURCE_TXT, bufferedReaderFactory2);
+		}
+
+		@Override
+		public void close() throws IOException {
+			try (BufferedReader thisBr = this.br;
+					BufferedReader thisBr2 = this.br2;) {
+				// no-op, just close the resources
 			}
+		}
+	}
+
+	/**
+	 * Illustrates that {@link UnsafeReadersWrapper} fails to close resources it
+	 * creates internally when a failure strikes half way through the
+	 * constructor.
+	 * 
+	 * @throws IOException
+	 */
+	@Test
+	public void testThatUnsafeWrapperLeaks() throws IOException {
+		NewBufferedReader goodReaderFactory = mock(NewBufferedReader.class);
+		when(goodReaderFactory.apply(any())).then(returnNewBufferedReader());
+		NewBufferedReader evilReaderFactory = mock(NewBufferedReader.class);
+		when(evilReaderFactory.apply(any())).thenThrow(new RuntimeException());
+
+		try (UnsafeReadersWrapper w = new UnsafeReadersWrapper(
+				goodReaderFactory, // init the first resource
+				evilReaderFactory);) { // but throw when creating the second
+			fail("Should have thrown!");
+		} catch (RuntimeException e) {
+			assertThatLeakedTheReaderPassedTo(goodReaderFactory);
+		}
+
+	}
+
+	private static Answer<BufferedReader> returnNewBufferedReader() {
+		return new Answer<BufferedReader>() {
+
+			@Override
+			public BufferedReader answer(
+					@Nullable InvocationOnMock invocation) {
+				return new BufferedReader(requireNotNull(invocation)
+						.getArgumentAt(0, Reader.class));
+			}
+
+		};
+	}
+
+	static <T> T requireNotNull(@Nullable T obj) {
+		if (obj == null)
+			throw new NullPointerException();
+		return obj;
+	}
+
+	/**
+	 * Then, let's see what it takes to write a wrapper with a robust
+	 * constructor that does not leaks any resources even if exceptions strike
+	 * at any point... Yuck!
+	 * 
+	 */
+	class UglyReadersWrapper implements Closeable {
+		BufferedReader br;
+		BufferedReader br2;
+
+		UglyReadersWrapper(NewBufferedReader bufferedReaderFactory1,
+				NewBufferedReader bufferedReaderFactory2) {
+			try {
+				this.br = easyGetReader(RESOURCE_TXT, bufferedReaderFactory1);
+				try {
+					this.br2 = easyGetReader(OTHER_RESOURCE_TXT,
+							bufferedReaderFactory2);
+				} catch (Exception e) {
+					try {
+						this.br2.close();
+					} catch (Exception e2) {
+						e.addSuppressed(e2);
+					}
+					throw e;
+
+				}
+			} catch (Exception e) {
+				try {
+					this.br.close();
+				} catch (Exception e2) {
+					e.addSuppressed(e2);
+				}
+				throw e;
+			}
+
+		}
+
+		@Override
+		public void close() throws IOException {
+			try (BufferedReader thisBr = this.br;
+					BufferedReader thisBr2 = this.br2;) {
+				// no-op, just close the resources
+			}
+		}
+
+	}
+
+	/**
+	 * Illustrates that {@link UglyReadersWrapper} closes the resources it
+	 * creates internally even when a failure strikes half way through the
+	 * constructor. However, properly coding such constructor was tedious and
+	 * this approach is quite error-prone in general.
+	 * 
+	 * @throws IOException
+	 */
+
+	@Test
+	public void testThatUglyWrapperClosesResources() throws IOException {
+		NewBufferedReader goodReaderFactory = mock(NewBufferedReader.class);
+		when(goodReaderFactory.apply(any())).then(returnNewBufferedReader());
+		NewBufferedReader evilReaderFactory = mock(NewBufferedReader.class);
+		when(evilReaderFactory.apply(any())).thenThrow(new RuntimeException());
+
+		try (UglyReadersWrapper w = new UglyReadersWrapper(goodReaderFactory, // init
+																				// the
+																				// first
+																				// resource
+				evilReaderFactory);) { // but throw when creating the second
+			fail("Should have thrown!");
+		} catch (RuntimeException e) {
+			assertThatIsClosedTheReaderPassedTo(goodReaderFactory);
+		}
+
+	}
+
+	/**
+	 * Well, so here comes {@link CollectScope} and {@link WrapperScope} to the
+	 * rescue: the first one is meant to assist in the writing of the robust
+	 * constructor that will never leak resources even in the presence of
+	 * exceptions.
+	 * <p>
+	 * 
+	 * The second one is a convenience {@code AutoCloseable} that will close all
+	 * the collected resources when it's called, so that all we need to do in
+	 * the {@link #close()} of our wrapper is close it and we'll be done with
+	 * our wrapped resources.
+	 */
+	class EasyReadersWrapper implements Closeable {
+		final BufferedReader br;
+		final BufferedReader br2;
+		final WrapperScope resources;
+
+		EasyReadersWrapper(NewBufferedReader bufferedReaderFactory1,
+				NewBufferedReader bufferedReaderFactory2) {
+			try (CollectScope s = CollectScope.getNew()) {
+				this.br = s.add(easyGetReader(RESOURCE_TXT,
+						bufferedReaderFactory1));
+				this.br2 = s.add(easyGetReader(OTHER_RESOURCE_TXT,
+						bufferedReaderFactory2));
+				this.resources = s.release();
+			}
+		}
+
+		@Override
+		public void close() throws CloseException {
+			this.resources.close();
+
+		}
+	}
+
+	/**
+	 * Illustrates that {@link EasyReadersWrapper} is a robust wrapper of
+	 * resources that does not leak even when a failure strikes half way through
+	 * the constructor. Once again, scopes made such abstraction easy to write.
+	 */
+	@Test
+	public void testThatEasyWrapperClosesResources() {
+		NewBufferedReader goodReaderFactory = mock(NewBufferedReader.class);
+		when(goodReaderFactory.apply(any())).then(returnNewBufferedReader());
+		NewBufferedReader evilReaderFactory = mock(NewBufferedReader.class);
+		when(evilReaderFactory.apply(any())).thenThrow(new RuntimeException());
+
+		try (EasyReadersWrapper w = new EasyReadersWrapper(goodReaderFactory, // init
+																				// the
+																				// first
+																				// resource
+				evilReaderFactory);) { // but throw when creating the second
+			fail("Should have thrown!");
+		} catch (RuntimeException e) {
+			assertThatIsClosedTheReaderPassedTo(goodReaderFactory);
 		}
 
 	}
