@@ -67,3 +67,35 @@ BufferedReader getReader(String filename, NewBufferedReader newReader) {
 }
 ```
 Note that `try-with-resources` could not have been used directly on `stream`, `reader` or `br` above as that would have caused them to be closed upon return from `getReader`. Instead, it is applied to the chain scope instance, which tracks the resources as they're created and only closes them if the scope exits prematurely due to an exception; otherwise, if the function reaches the execution of the `release()` call, then the scope will not close any resource and the function will return a working buffered reader to the caller.
+
+Other scenario where this library aims to help is when coding a new `AutoCloseable` object that wraps two or more resources. They usually get complex at two places: their constructor, and somewhat less in their implementation of `close()`.
+
+In the case of the constructor, such a wrapper will usually allocate each resource, one at a time. Here again, if an exception strikes, all resources should have to be immediately closed. On the other hand, if the construction succeeds, we'll want to ensure that they are all closed when the wrapper's `close()` method is called.
+
+This library provides the `CollectScope` and the `WrapperScope` objects, with which an object wrapping two buffered readers could look like this:
+```java
+class ReadersWrapper implements Closeable {
+	final BufferedReader br;
+	final BufferedReader br2;
+	final WrapperScope resources;
+
+	ReadersWrapper(NewBufferedReader bufferedReaderFactory1,
+			NewBufferedReader bufferedReaderFactory2) {
+		try (CollectScope s = CollectScope.getNew()) {
+			this.br = s.add(getReader(RESOURCE_TXT));
+			this.br2 = s.add(getReader(OTHER_RESOURCE_TXT));
+			this.resources = s.release();
+		}
+	}
+
+	@Override
+	public void close() throws CloseException {
+		this.resources.close();
+	}
+}
+```
+Just like `ChainScope`, `CollectScope` greatly simplifies the initialization of several resources but this time in the context of writing the constructor fo the resources wrapper. 
+
+The later also returns a `WrapperScope` when its `release()` method is called, which will conveniently close all the collected resources when its `close()` method is called. That's precisely what `ReadersWrapper` needs for implementing its own `close()` method. As an added bonus, the `close()` is guaranteed to be idempotent without any additional effort from the author of `ReadersWrapper`.
+
+How would `ReadersWrapper` had looked like without the help of the scope classes? That is left as an excercise to the reader ;-)
