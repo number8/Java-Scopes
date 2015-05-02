@@ -66,4 +66,4 @@ BufferedReader getReader(String filename, NewBufferedReader newReader) {
 	}
 }
 ```
-Note that `try-with-resources` could not have been used directly on `stream`, `reader` or `br` above as that would have caused them to be closed upon return from `getReader`. Instead, the chain scope instance just tracks the resources as they're created so that, if the scope exits prematurely due to an exception, then any "hooked" resource will be closed; otherwise, if the function reaches the execution of the `release()` call, then the scope will not close any resource and the function will return a working buffered reader to the caller.
+Note that `try-with-resources` could not have been used directly on `stream`, `reader` or `br` above as that would have caused them to be closed upon return from `getReader`. Instead, it is applied to the chain scope instance, which tracks the resources as they're created and only closes them if the scope exits prematurely due to an exception; otherwise, if the function reaches the execution of the `release()` call, then the scope will not close any resource and the function will return a working buffered reader to the caller.
