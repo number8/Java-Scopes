@@ -98,4 +98,4 @@ Just like `ChainScope`, `CollectScope` greatly simplifies the initialization of 
 
 The later also returns a `WrapperScope` when its `release()` method is called, which will conveniently close all the collected resources when its `close()` method is called. That's precisely what `ReadersWrapper` needs for implementing its own `close()` method. As an added bonus, the `close()` is guaranteed to be idempotent without any additional effort from the author of `ReadersWrapper`.
 
-How would `ReadersWrapper` had looked like without the help of the scope classes? That is left as an excercise to the reader ;-)
+How would `ReadersWrapper` had looked like without the help of the scope classes? That is left as an excercise to the reader ;-) ... [Or check the test cases for the gory details](src/test/java/com/prosoftnearshore/scope/ScopeTests.java).
