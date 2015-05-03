@@ -94,7 +94,7 @@ class ReadersWrapper implements Closeable {
 	}
 }
 ```
-Just like `ChainScope`, `CollectScope` greatly simplifies the initialization of several resources but this time in the context of writing the constructor fo the resources wrapper. 
+Just like `ChainScope`, `CollectScope` greatly simplifies the initialization of several resources but this time in the context of writing the constructor for a wrapper of resources. 
 
 The later also returns a `WrapperScope` when its `release()` method is called, which will conveniently close all the collected resources when its `close()` method is called. That's precisely what `ReadersWrapper` needs for implementing its own `close()` method. As an added bonus, the `close()` is guaranteed to be idempotent without any additional effort from the author of `ReadersWrapper`.
 
