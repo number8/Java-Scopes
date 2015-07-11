@@ -9,7 +9,7 @@ try (InputStream stream = this.getClass().getResourceAsStream(RESOURCE_TXT);
 	// use the resource
 }
 ```
-Sometimes, we'd like to abstract such patterns of instantiaton of resources, like when we want to manipulate more than one at a time:
+Sometimes, we'd like to abstract such patterns of instantiation of resources, like when we want to manipulate more than one at a time:
 ```java
 try (BufferedReader br = getReader(RESOURCE_TXT);
      BufferedReader br2 = getReader(OTHER_RESOURCE_TXT);) {
@@ -98,4 +98,8 @@ Just like `ChainScope`, `CollectScope` greatly simplifies the initialization of 
 
 The later also returns a `WrapperScope` when its `release()` method is called, which will conveniently close all the collected resources when its `close()` method is called. That's precisely what `ReadersWrapper` needs for implementing its own `close()` method. As an added bonus, the `close()` is guaranteed to be idempotent without any additional effort from the author of `ReadersWrapper`.
 
-How would `ReadersWrapper` had looked like without the help of the scope classes? That is left as an excercise to the reader ;-) ... [Or check the test cases for the gory details](src/test/java/com/prosoftnearshore/scope/ScopeTests.java).
+How would `ReadersWrapper` had looked like without the help of the scope classes? That is left as an exercise to the reader ;-) ... [Or check the test cases for the gory details](src/test/java/com/prosoftnearshore/scope/ScopeTests.java).
+
+- - -
+
+Copyright 2015 Prosoft, LLC. [Licensed under the Apache License, Version 2.0](http://www.apache.org/licenses/LICENSE-2.0)
