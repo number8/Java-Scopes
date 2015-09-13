@@ -15,7 +15,7 @@ limitations under the License.
  */
 package com.prosoftnearshore.scope;
 
-import org.eclipse.jdt.annotation.Nullable;
+import javax.annotation.Nullable;
 
 public class ChainScope implements Scope {
 

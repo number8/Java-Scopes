@@ -5,7 +5,7 @@ Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 You may obtain a copy of the License at
 
-    http://www.apache.org/licenses/LICENSE-2.0
+	http://www.apache.org/licenses/LICENSE-2.0
 
 Unless required by applicable law or agreed to in writing, software
 distributed under the License is distributed on an "AS IS" BASIS,
@@ -15,24 +15,19 @@ limitations under the License.
  */
 package com.prosoftnearshore.scope;
 
-import static org.junit.Assert.*;
-import static org.mockito.Matchers.any;
-import static org.mockito.Mockito.*;
+import org.junit.Test;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Matchers;
+import org.mockito.invocation.InvocationOnMock;
+import org.mockito.stubbing.Answer;
 
-import java.io.BufferedReader;
-import java.io.Closeable;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.Reader;
+import javax.annotation.Nullable;
+import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.util.function.Function;
 
-import org.eclipse.jdt.annotation.Nullable;
-import org.junit.Test;
-import org.mockito.ArgumentCaptor;
-import org.mockito.invocation.InvocationOnMock;
-import org.mockito.stubbing.Answer;
+import static org.junit.Assert.*;
+import static org.mockito.Mockito.*;
 
 /**
  *
@@ -46,17 +41,15 @@ public class ScopeTests {
 	 * Notice that the only variable we care for inside the {@code try} block is
 	 * {@code br}; the others were introduced merely to ensure the
 	 * try-with-resources manages them appropriately.
-	 * 
+	 *
 	 * @throws IOException
 	 */
 
 	@Test
 	public void testOpenResource() throws IOException {
-		try (InputStream stream = this.getClass().getResourceAsStream(
-				RESOURCE_TXT);
-				InputStreamReader reader = new InputStreamReader(stream,
-						StandardCharsets.UTF_8);
-				BufferedReader br = new BufferedReader(reader);) {
+		try (InputStream stream = this.getClass().getResourceAsStream(RESOURCE_TXT);
+			 InputStreamReader reader = new InputStreamReader(stream, StandardCharsets.UTF_8);
+			 BufferedReader br = new BufferedReader(reader)) {
 
 			assertEquals("resource contents", br.readLine());
 		}
@@ -67,25 +60,21 @@ public class ScopeTests {
 	/**
 	 * Illustrates how the same procedure in {@link #testOpenResource} gets much
 	 * more cumbersome if we have to handle more than one resource.
-	 * 
+	 *
 	 * @throws IOException
 	 */
 	@Test
 	public void testOpenTwoResources() throws IOException {
-		try (InputStream stream = this.getClass().getResourceAsStream(
-				RESOURCE_TXT);
-				InputStreamReader reader = new InputStreamReader(stream,
-						StandardCharsets.UTF_8);
-				BufferedReader br = new BufferedReader(reader);
+		try (InputStream stream = this.getClass().getResourceAsStream(RESOURCE_TXT);
+			 InputStreamReader reader = new InputStreamReader(stream, StandardCharsets.UTF_8);
+			 BufferedReader br = new BufferedReader(reader);
 
-				// watch out with copy-n-paste: don't forget to append a '2' to
-				// all references of 'stream', 'reader' and 'br'. I got bit by
-				// that.
-				InputStream stream2 = this.getClass().getResourceAsStream(
-						OTHER_RESOURCE_TXT);
-				InputStreamReader reader2 = new InputStreamReader(stream2,
-						StandardCharsets.UTF_8);
-				BufferedReader br2 = new BufferedReader(reader2);) {
+			 // watch out with copy-n-paste: don't forget to append a '2' to
+			 // all references of 'stream', 'reader' and 'br'. I got bit by
+			 // that.
+			 InputStream stream2 = this.getClass().getResourceAsStream(OTHER_RESOURCE_TXT);
+			 InputStreamReader reader2 = new InputStreamReader(stream2, StandardCharsets.UTF_8);
+			 BufferedReader br2 = new BufferedReader(reader2)) {
 
 			assertEquals("resource contents", br.readLine());
 			assertEquals("other resource contents", br2.readLine());
@@ -97,18 +86,16 @@ public class ScopeTests {
 	 * we're after in order to read the resource contents. But this time
 	 * try-with-resources gets in the way: the resources are always closed by
 	 * the time the caller gets them.
-	 * 
-	 * @param filename
-	 *            The name of the bundled resource to open.
+	 *
+	 * @param filename The name of the bundled resource to open.
 	 * @return A {@code BufferedReader} for reading the resource contents (or is
-	 *         it?).
+	 * it?).
 	 * @throws IOException
 	 */
 	BufferedReader brokenGetReader(String filename) throws IOException {
 		try (InputStream stream = this.getClass().getResourceAsStream(filename);
-				InputStreamReader reader = new InputStreamReader(stream,
-						StandardCharsets.UTF_8);
-				BufferedReader br = new BufferedReader(reader);) {
+			 InputStreamReader reader = new InputStreamReader(stream, StandardCharsets.UTF_8);
+			 BufferedReader br = new BufferedReader(reader)) {
 			return br;
 		}
 	}
@@ -117,13 +104,13 @@ public class ScopeTests {
 	 * Illustrates that {@link #brokenGetReader} doesn't really work to abstract
 	 * away the instantiation of the readers. A shame because the client code
 	 * could be cleaned up quite a bit.
-	 * 
+	 *
 	 * @throws IOException
 	 */
 	@Test
 	public void testBrokenGetReader() throws IOException {
 		try (BufferedReader br = brokenGetReader(RESOURCE_TXT);
-				BufferedReader br2 = brokenGetReader(OTHER_RESOURCE_TXT);) {
+			 BufferedReader br2 = brokenGetReader(OTHER_RESOURCE_TXT)) {
 
 			try {
 				assertEquals("resource contents", br.readLine());
@@ -139,29 +126,26 @@ public class ScopeTests {
 	/**
 	 * Alas, it seems we have to forego the safety of try-with-resources in
 	 * order to make our code less painful to write.
-	 * 
-	 * @param filename
-	 *            The name of the bundled resource to open.
+	 *
+	 * @param filename The name of the bundled resource to open.
 	 * @return A {@code BufferedReader} for reading the resource contents
 	 */
 	BufferedReader unsafeGetReader(String filename) {
 		InputStream stream = this.getClass().getResourceAsStream(filename);
-		InputStreamReader reader = new InputStreamReader(stream,
-				StandardCharsets.UTF_8);
-		BufferedReader br = new BufferedReader(reader);
-		return br;
+		InputStreamReader reader = new InputStreamReader(stream, StandardCharsets.UTF_8);
+		return new BufferedReader(reader);
 	}
 
 	/**
 	 * Illustrates that {@link #unsafeGetReader(String)} at least returns a
 	 * working reader, and client code can be nice to write.
-	 * 
+	 *
 	 * @throws IOException
 	 */
 	@Test
 	public void testUnsafeGetReader() throws IOException {
 		try (BufferedReader br = unsafeGetReader(RESOURCE_TXT);
-				BufferedReader br2 = unsafeGetReader(OTHER_RESOURCE_TXT);) {
+			 BufferedReader br2 = unsafeGetReader(OTHER_RESOURCE_TXT)) {
 
 			assertEquals("resource contents", br.readLine());
 			assertEquals("other resource contents", br2.readLine());
@@ -172,22 +156,18 @@ public class ScopeTests {
 	 * But the time will likely come when we can no longer just close our eyes
 	 * to the fact that {@code unsafeGetReader} is, hum, unsafe. Let's make room
 	 * for injecting some failures.
-	 * 
-	 * @param filename
-	 *            The name of the bundled resource to open.
-	 * @param newReader
-	 *            A factory method that may or may not succeed at instantiating
-	 *            the {@code BufferedReader}.
+	 *
+	 * @param filename  The name of the bundled resource to open.
+	 * @param newReader A factory method that may or may not succeed at instantiating
+	 *                  the {@code BufferedReader}.
 	 * @return A {@code BufferedReader} for reading the resource contents (if
-	 *         all goes well, that is).
+	 * all goes well, that is).
 	 */
 	@SuppressWarnings("resource")
 	BufferedReader unsafeGetReader(String filename, NewBufferedReader newReader) {
 		InputStream stream = this.getClass().getResourceAsStream(filename);
-		InputStreamReader reader = new InputStreamReader(stream,
-				StandardCharsets.UTF_8);
-		BufferedReader br = newReader.apply(reader);
-		return br;
+		InputStreamReader reader = new InputStreamReader(stream, StandardCharsets.UTF_8);
+		return newReader.apply(reader);
 	}
 
 	/**
@@ -195,16 +175,15 @@ public class ScopeTests {
 	 * fail to close resources it creates internally when a failure strikes half
 	 * way through. If it weren't for the mocking infrastructure, there's
 	 * nothing the client code could do to clean up after.
-	 * 
+	 *
 	 * @throws IOException
 	 */
 	@Test
 	public void testThatUnsafeDoesNotCloseResources() throws IOException {
 		NewBufferedReader evilReaderFactory = mock(NewBufferedReader.class);
-		when(evilReaderFactory.apply(any())).thenThrow(new RuntimeException());
+		when(evilReaderFactory.apply(Matchers.<Reader>any())).thenThrow(new RuntimeException());
 
-		try (BufferedReader br = unsafeGetReader(RESOURCE_TXT,
-				evilReaderFactory);) {
+		try (BufferedReader br = unsafeGetReader(RESOURCE_TXT, evilReaderFactory)) {
 			fail("Should have thrown!");
 		} catch (RuntimeException e) {
 			assertThatLeakedTheReaderPassedTo(evilReaderFactory);
@@ -216,9 +195,14 @@ public class ScopeTests {
 	 * A functional interface for the BufferedReader factory method.
 	 */
 	interface NewBufferedReader extends Function<Reader, BufferedReader> {
-		@Override
-		public BufferedReader apply(Reader t);
 	}
+
+	static final NewBufferedReader newBufferedReader = new NewBufferedReader() {
+		@Override
+		public BufferedReader apply(Reader t) {
+			return new BufferedReader(t);
+		}
+	};
 
 	private static void assertThatLeakedTheReaderPassedTo(
 			final NewBufferedReader mockedReaderFactory) throws IOException {
@@ -228,7 +212,7 @@ public class ScopeTests {
 		verify(mockedReaderFactory).apply(readerArgument.capture());
 		// The reader is still open, so ensure it's closed after
 		// assertion is done
-		try (InputStreamReader reader = readerArgument.getValue();) {
+		try (InputStreamReader reader = readerArgument.getValue()) {
 			assertTrue(readerArgument.getValue().ready());
 		}
 	}
@@ -237,45 +221,26 @@ public class ScopeTests {
 	 * Then, let's not give up on doing The Right Thing(tm) and ensure no
 	 * resources are leaked, even if something goes wrong. The price we pay,
 	 * though, is code that is not so pretty.
-	 * 
-	 * @param filename
-	 * @param newReader
-	 * @return
 	 */
 
 	@SuppressWarnings("resource")
 	BufferedReader uglyGetReader(String filename, NewBufferedReader newReader) {
 		InputStream stream = null;
 		InputStreamReader reader = null;
-		BufferedReader br = null;
 		try {
 			stream = this.getClass().getResourceAsStream(filename);
 			reader = new InputStreamReader(stream, StandardCharsets.UTF_8);
-			br = newReader.apply(reader);
-			return br;
+			return newReader.apply(reader);
 		} catch (RuntimeException e) {
 			// Ensure to close any resources that may have been allocated before
 			// the failure; do the checks & cleanup in the reverse order they
-			// may have been allocated, and watch out for failures from calls to
-			// close()!
-			if (br != null)
-				try {
-					br.close();
-				} catch (IOException e2) {
-					e.addSuppressed(e2);
-				}
-			else if (reader != null)
-				try {
-					reader.close();
-				} catch (IOException e2) {
-					e.addSuppressed(e2);
-				}
-			else if (stream != null)
-				try {
-					stream.close();
-				} catch (IOException e2) {
-					e.addSuppressed(e2);
-				}
+			// may have been allocated.
+			try (InputStream streamToClose = stream;
+				 InputStreamReader readerToClose = reader) {
+				// no-op, just close the resources
+			} catch (IOException e2) {
+				e.addSuppressed(e2);
+			}
 			throw e;
 		}
 	}
@@ -284,16 +249,16 @@ public class ScopeTests {
 	 * Illustrates that uglyGetReader closes its resources in the case of
 	 * failure. With it, callers' job is much easier; if only uglyGetReader were
 	 * not so painful to write...
-	 * 
+	 *
 	 * @throws IOException
 	 */
 
 	@Test
 	public void testThatUglyClosesResources() throws IOException {
 		NewBufferedReader evilReaderFactory = mock(NewBufferedReader.class);
-		when(evilReaderFactory.apply(any())).thenThrow(new RuntimeException());
+		when(evilReaderFactory.apply(Matchers.<Reader>any())).thenThrow(new RuntimeException());
 
-		try (BufferedReader br = uglyGetReader(RESOURCE_TXT, evilReaderFactory);) {
+		try (BufferedReader br = uglyGetReader(RESOURCE_TXT, evilReaderFactory)) {
 			fail("Should have thrown!");
 		} catch (RuntimeException e) {
 			assertThatIsClosedTheReaderPassedTo(evilReaderFactory);
@@ -307,7 +272,7 @@ public class ScopeTests {
 				.forClass(InputStreamReader.class);
 
 		verify(factoryMock).apply(readerArgument.capture());
-		try (InputStreamReader reader = readerArgument.getValue();) {
+		try (InputStreamReader reader = readerArgument.getValue()) {
 			assertTrue(readerArgument.getValue().ready());
 			fail("Hey, reader should have been closed already!");
 		} catch (IOException e2) {
@@ -325,7 +290,6 @@ public class ScopeTests {
 	 * initialization process, any failure or exception should trigger the
 	 * closing of the last successfully initialized resource. *
 	 * <p>
-	 * 
 	 * {@code ChainScope} works by temporarily hooking in (owning) a resource.
 	 * The hooked resource is then passed to the initialization of the next
 	 * resource, which is then immediately hooked in by the scope. The process
@@ -335,7 +299,6 @@ public class ScopeTests {
 	 * resource survives outside the initializing scope so that it can be
 	 * attached into the {@code try-with-resources} block of the caller).
 	 * <p>
-	 * 
 	 * However, if the scope prematurely closes before releasing the last hooked
 	 * resource in the chain (as is the case when an exception is thrown along
 	 * the way), then the scope, being itself a resource attached to a
@@ -344,33 +307,23 @@ public class ScopeTests {
 	 * release of all the resources in the chain that were successfully
 	 * initialized.
 	 * <p>
-	 * 
 	 * So, in general, exception-safe functions abstracting the
 	 * chained-initialization pattern of resources can be easily written as
 	 * follows:
-	 * 
-	 * <pre>
-	 * <code>
+	 * <pre>{@code
 	 * try (ChainScope s = ChainScope.getNew();) {
 	 *   R1 r1 = s.hook(initR1());
 	 *   R2 r2 = s.hook(initR2(r1));
 	 *   R3 r3 = s.hook(initR3(r2));
 	 *   return s.release(r3);
 	 * }
-	 * </code>
-	 * </pre>
-	 * 
-	 * @param filename
-	 * @param newReader
-	 * @return
+	 * }</pre>
 	 */
 	@SuppressWarnings("resource")
 	BufferedReader easyGetReader(String filename, NewBufferedReader newReader) {
 		try (ChainScope s = ChainScope.getNew()) {
-			InputStream stream = s.hook(this.getClass().getResourceAsStream(
-					filename));
-			InputStreamReader reader = s.hook(new InputStreamReader(stream,
-					StandardCharsets.UTF_8));
+			InputStream stream = s.hook(this.getClass().getResourceAsStream(filename));
+			InputStreamReader reader = s.hook(new InputStreamReader(stream, StandardCharsets.UTF_8));
 			BufferedReader br = s.hook(newReader.apply(reader));
 			return s.release(br);
 		}
@@ -379,15 +332,13 @@ public class ScopeTests {
 	/**
 	 * Illustrates that {@link #easyGetReader(String, NewBufferedReader)}
 	 * returns a working reader, and client code can be nice to write.
-	 * 
+	 *
 	 * @throws IOException
 	 */
 	@Test
 	public void testEasyGetReader() throws IOException {
-		try (BufferedReader br = easyGetReader(RESOURCE_TXT,
-				BufferedReader::new);
-				BufferedReader br2 = easyGetReader(OTHER_RESOURCE_TXT,
-						BufferedReader::new);) {
+		try (BufferedReader br = easyGetReader(RESOURCE_TXT, newBufferedReader);
+			 BufferedReader br2 = easyGetReader(OTHER_RESOURCE_TXT, newBufferedReader)) {
 
 			assertEquals("resource contents", br.readLine());
 			assertEquals("other resource contents", br2.readLine());
@@ -399,15 +350,15 @@ public class ScopeTests {
 	 * failure. Thus, not only the callers' job is much easier, but also it
 	 * wasn't painful to write the function abstracting the initialization of
 	 * the resources. Yay!
-	 * 
+	 *
 	 * @throws IOException
 	 */
 	@Test
 	public void testThatEasyClosesResources() throws IOException {
 		NewBufferedReader evilReaderFactory = mock(NewBufferedReader.class);
-		when(evilReaderFactory.apply(any())).thenThrow(new RuntimeException());
+		when(evilReaderFactory.apply(Matchers.<Reader>any())).thenThrow(new RuntimeException());
 
-		try (BufferedReader br = easyGetReader(RESOURCE_TXT, evilReaderFactory);) {
+		try (BufferedReader br = easyGetReader(RESOURCE_TXT, evilReaderFactory)) {
 			fail("Should have thrown!");
 		} catch (RuntimeException e) {
 			assertThatIsClosedTheReaderPassedTo(evilReaderFactory);
@@ -422,7 +373,6 @@ public class ScopeTests {
 	 * constructor and b) will have to ensure they're all closed when its close
 	 * method is called.
 	 * <p>
-	 * 
 	 * But it is not enough to close the resources when {@link #close()} is
 	 * called: if the constructor can throw, in particular, it should be very
 	 * careful of not leaking resources that may have been initialized just
@@ -433,7 +383,7 @@ public class ScopeTests {
 		BufferedReader br2;
 
 		UnsafeReadersWrapper(NewBufferedReader bufferedReaderFactory1,
-				NewBufferedReader bufferedReaderFactory2) {
+							 NewBufferedReader bufferedReaderFactory2) {
 			this.br = easyGetReader(RESOURCE_TXT, bufferedReaderFactory1);
 			this.br2 = easyGetReader(OTHER_RESOURCE_TXT, bufferedReaderFactory2);
 		}
@@ -441,7 +391,7 @@ public class ScopeTests {
 		@Override
 		public void close() throws IOException {
 			try (BufferedReader thisBr = this.br;
-					BufferedReader thisBr2 = this.br2;) {
+				 BufferedReader thisBr2 = this.br2) {
 				// no-op, just close the resources
 			}
 		}
@@ -451,19 +401,19 @@ public class ScopeTests {
 	 * Illustrates that {@link UnsafeReadersWrapper} fails to close resources it
 	 * creates internally when a failure strikes half way through the
 	 * constructor.
-	 * 
+	 *
 	 * @throws IOException
 	 */
 	@Test
 	public void testThatUnsafeWrapperLeaks() throws IOException {
 		NewBufferedReader goodReaderFactory = mock(NewBufferedReader.class);
-		when(goodReaderFactory.apply(any())).then(returnNewBufferedReader());
+		when(goodReaderFactory.apply(Matchers.<Reader>any())).then(returnNewBufferedReader());
 		NewBufferedReader evilReaderFactory = mock(NewBufferedReader.class);
-		when(evilReaderFactory.apply(any())).thenThrow(new RuntimeException());
+		when(evilReaderFactory.apply(Matchers.<Reader>any())).thenThrow(new RuntimeException());
 
 		try (UnsafeReadersWrapper w = new UnsafeReadersWrapper(
 				goodReaderFactory, // init the first resource
-				evilReaderFactory);) { // but throw when creating the second
+				evilReaderFactory)) { // but throw when creating the second
 			fail("Should have thrown!");
 		} catch (RuntimeException e) {
 			assertThatLeakedTheReaderPassedTo(goodReaderFactory);
@@ -494,19 +444,17 @@ public class ScopeTests {
 	 * Then, let's see what it takes to write a wrapper with a robust
 	 * constructor that does not leaks any resources even if exceptions strike
 	 * at any point... Yuck!
-	 * 
 	 */
 	class UglyReadersWrapper implements Closeable {
 		BufferedReader br;
 		BufferedReader br2;
 
 		UglyReadersWrapper(NewBufferedReader bufferedReaderFactory1,
-				NewBufferedReader bufferedReaderFactory2) {
+						   NewBufferedReader bufferedReaderFactory2) {
 			try {
 				this.br = easyGetReader(RESOURCE_TXT, bufferedReaderFactory1);
 				try {
-					this.br2 = easyGetReader(OTHER_RESOURCE_TXT,
-							bufferedReaderFactory2);
+					this.br2 = easyGetReader(OTHER_RESOURCE_TXT, bufferedReaderFactory2);
 				} catch (Exception e) {
 					try {
 						this.br2.close();
@@ -530,7 +478,7 @@ public class ScopeTests {
 		@Override
 		public void close() throws IOException {
 			try (BufferedReader thisBr = this.br;
-					BufferedReader thisBr2 = this.br2;) {
+				 BufferedReader thisBr2 = this.br2) {
 				// no-op, just close the resources
 			}
 		}
@@ -542,22 +490,20 @@ public class ScopeTests {
 	 * creates internally even when a failure strikes half way through the
 	 * constructor. However, properly coding such constructor was tedious and
 	 * this approach is quite error-prone in general.
-	 * 
+	 *
 	 * @throws IOException
 	 */
 
 	@Test
 	public void testThatUglyWrapperClosesResources() throws IOException {
 		NewBufferedReader goodReaderFactory = mock(NewBufferedReader.class);
-		when(goodReaderFactory.apply(any())).then(returnNewBufferedReader());
+		when(goodReaderFactory.apply(Matchers.<Reader>any())).then(returnNewBufferedReader());
 		NewBufferedReader evilReaderFactory = mock(NewBufferedReader.class);
-		when(evilReaderFactory.apply(any())).thenThrow(new RuntimeException());
+		when(evilReaderFactory.apply(Matchers.<Reader>any())).thenThrow(new RuntimeException());
 
-		try (UglyReadersWrapper w = new UglyReadersWrapper(goodReaderFactory, // init
-																				// the
-																				// first
-																				// resource
-				evilReaderFactory);) { // but throw when creating the second
+		try (UglyReadersWrapper w = new UglyReadersWrapper(
+				goodReaderFactory, // init the first resource
+				evilReaderFactory)) { // but throw when creating the second
 			fail("Should have thrown!");
 		} catch (RuntimeException e) {
 			assertThatIsClosedTheReaderPassedTo(goodReaderFactory);
@@ -571,7 +517,6 @@ public class ScopeTests {
 	 * constructor that will never leak resources even in the presence of
 	 * exceptions.
 	 * <p>
-	 * 
 	 * The second one is a convenience {@code AutoCloseable} that will close all
 	 * the collected resources when it's called, so that all we need to do in
 	 * the {@link #close()} of our wrapper is close it and we'll be done with
@@ -583,12 +528,10 @@ public class ScopeTests {
 		final WrapperScope resources;
 
 		EasyReadersWrapper(NewBufferedReader bufferedReaderFactory1,
-				NewBufferedReader bufferedReaderFactory2) {
+						   NewBufferedReader bufferedReaderFactory2) {
 			try (CollectScope s = CollectScope.getNew()) {
-				this.br = s.add(easyGetReader(RESOURCE_TXT,
-						bufferedReaderFactory1));
-				this.br2 = s.add(easyGetReader(OTHER_RESOURCE_TXT,
-						bufferedReaderFactory2));
+				this.br = s.add(easyGetReader(RESOURCE_TXT, bufferedReaderFactory1));
+				this.br2 = s.add(easyGetReader(OTHER_RESOURCE_TXT, bufferedReaderFactory2));
 				this.resources = s.release();
 			}
 		}
@@ -608,20 +551,17 @@ public class ScopeTests {
 	@Test
 	public void testThatEasyWrapperClosesResources() {
 		NewBufferedReader goodReaderFactory = mock(NewBufferedReader.class);
-		when(goodReaderFactory.apply(any())).then(returnNewBufferedReader());
+		when(goodReaderFactory.apply(Matchers.<Reader>any())).then(returnNewBufferedReader());
 		NewBufferedReader evilReaderFactory = mock(NewBufferedReader.class);
-		when(evilReaderFactory.apply(any())).thenThrow(new RuntimeException());
+		when(evilReaderFactory.apply(Matchers.<Reader>any())).thenThrow(new RuntimeException());
 
-		try (EasyReadersWrapper w = new EasyReadersWrapper(goodReaderFactory, // init
-																				// the
-																				// first
-																				// resource
-				evilReaderFactory);) { // but throw when creating the second
+		try (EasyReadersWrapper w = new EasyReadersWrapper(
+				goodReaderFactory, // init the first resource
+				evilReaderFactory)) { // but throw when creating the second
 			fail("Should have thrown!");
 		} catch (RuntimeException e) {
 			assertThatIsClosedTheReaderPassedTo(goodReaderFactory);
 		}
-
 	}
 
 }
