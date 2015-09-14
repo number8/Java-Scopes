@@ -21,7 +21,7 @@ public class ChainScope implements Scope {
 
 	/**
 	 * Construct and return a new instance of {@link ChainScope}.
-	 * 
+	 *
 	 * @return a new instance of {@code ChainScope}.
 	 */
 	public static ChainScope getNew() {
@@ -32,19 +32,15 @@ public class ChainScope implements Scope {
 	 * Closes this scope, relinquishing the owned resource if any. This method
 	 * is invoked automatically on objects managed by the
 	 * {@code try-with-resources} statement.
-	 *
 	 * <p>
 	 * If the scope is already closed then invoking this method should have no
 	 * effect.
 	 *
-	 * @throws CloseException
-	 *             if the owned resource throws a checked exception. The
-	 *             {@code CloseException} would wrap the checked exception
-	 *             originally thrown.
-	 * 
-	 * @throws RuntimeException
-	 *             if the owned resource throw an unchecked exception when
-	 *             trying to close them.
+	 * @throws CloseException   if the owned resource throws a checked exception. The
+	 *                          {@code CloseException} would wrap the checked exception
+	 *                          originally thrown.
+	 * @throws RuntimeException if the owned resource throw an unchecked exception when
+	 *                          trying to close them.
 	 */
 	@Override
 	public void close() throws RuntimeException {
@@ -69,9 +65,8 @@ public class ChainScope implements Scope {
 	 * Hooks a resource into the scope. It is assumed that the resource being
 	 * hooked will own any other resource that was previously hooked and so the
 	 * scope will only attempt to close the resource that was hooked last.
-	 * 
-	 * @param resource
-	 *            The resource to be hooked in to the scope.
+	 *
+	 * @param resource The resource to be hooked in to the scope.
 	 * @return The same {@code autoCloseable} passed in.
 	 */
 	public <T extends AutoCloseable> T hook(T resource) {
@@ -102,7 +97,9 @@ public class ChainScope implements Scope {
 	//
 	// Private Members
 	//
-	private @Nullable AutoCloseable hooked = null;
+	private
+	@Nullable
+	AutoCloseable hooked = null;
 
 	private ChainScope() {
 		// hide constructor from API

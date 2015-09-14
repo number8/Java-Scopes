@@ -22,7 +22,7 @@ public class WrapperScope implements Scope {
 
 	/**
 	 * Construct and return a new instance of {@link WrapperScope}.
-	 * 
+	 *
 	 * @return a new instance of {@code WrapperScope}.
 	 */
 	public static WrapperScope getNew() {

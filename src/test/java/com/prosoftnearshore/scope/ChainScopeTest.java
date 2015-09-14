@@ -15,20 +15,17 @@ limitations under the License.
  */
 package com.prosoftnearshore.scope;
 
-import static org.junit.Assert.*;
-
 import org.junit.Test;
 
+import static org.junit.Assert.assertSame;
+import static org.junit.Assert.fail;
 import static org.mockito.Mockito.*;
 
 public class ChainScopeTest {
 
-	@SuppressWarnings("static-method")
 	@Test
 	public void closeIsIdempotent() throws Exception {
-		@SuppressWarnings("resource")
 		ChainScope scope = ChainScope.getNew();
-		@SuppressWarnings("resource")
 		AutoCloseable resource = mock(AutoCloseable.class);
 
 		scope.hook(resource);
@@ -38,13 +35,10 @@ public class ChainScopeTest {
 		verify(resource).close();
 	}
 
-	@SuppressWarnings("static-method")
 	@Test
 	public void closeIsIdempotentOnFailure() throws Exception {
-		@SuppressWarnings("resource")
 		ChainScope scope = ChainScope.getNew();
 
-		@SuppressWarnings("resource")
 		AutoCloseable resource = mock(AutoCloseable.class);
 		doThrow(Exception.class).when(resource).close();
 
@@ -60,13 +54,10 @@ public class ChainScopeTest {
 		}
 	}
 
-	@SuppressWarnings("static-method")
 	@Test(expected = CloseException.class)
 	public void checkedExceptionIsWrappedInCloseException() throws Exception {
-		@SuppressWarnings("resource")
 		ChainScope scope = ChainScope.getNew();
 
-		@SuppressWarnings("resource")
 		AutoCloseable resource = mock(AutoCloseable.class);
 		doThrow(Exception.class).when(resource).close();
 
@@ -74,18 +65,15 @@ public class ChainScopeTest {
 		scope.close();
 	}
 
-	@SuppressWarnings("static-method")
 	@Test
 	public void releasePreventsClosingResources() throws Exception {
-		@SuppressWarnings("resource")
 		ChainScope scope = ChainScope.getNew();
-		@SuppressWarnings("resource")
 		AutoCloseable resource = mock(AutoCloseable.class);
-		
+
 		scope.hook(resource);
 		assertSame(resource, scope.release(resource));
 		scope.close();
-		
+
 		// verify that the resource was not in fact attempted to be closed
 		verify(resource, never()).close();
 	}

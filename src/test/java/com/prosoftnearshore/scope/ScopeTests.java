@@ -48,8 +48,8 @@ public class ScopeTests {
 	@Test
 	public void testOpenResource() throws IOException {
 		try (InputStream stream = this.getClass().getResourceAsStream(RESOURCE_TXT);
-			 InputStreamReader reader = new InputStreamReader(stream, StandardCharsets.UTF_8);
-			 BufferedReader br = new BufferedReader(reader)) {
+		     InputStreamReader reader = new InputStreamReader(stream, StandardCharsets.UTF_8);
+		     BufferedReader br = new BufferedReader(reader)) {
 
 			assertEquals("resource contents", br.readLine());
 		}
@@ -66,15 +66,15 @@ public class ScopeTests {
 	@Test
 	public void testOpenTwoResources() throws IOException {
 		try (InputStream stream = this.getClass().getResourceAsStream(RESOURCE_TXT);
-			 InputStreamReader reader = new InputStreamReader(stream, StandardCharsets.UTF_8);
-			 BufferedReader br = new BufferedReader(reader);
+		     InputStreamReader reader = new InputStreamReader(stream, StandardCharsets.UTF_8);
+		     BufferedReader br = new BufferedReader(reader);
 
-			 // watch out with copy-n-paste: don't forget to append a '2' to
-			 // all references of 'stream', 'reader' and 'br'. I got bit by
-			 // that.
-			 InputStream stream2 = this.getClass().getResourceAsStream(OTHER_RESOURCE_TXT);
-			 InputStreamReader reader2 = new InputStreamReader(stream2, StandardCharsets.UTF_8);
-			 BufferedReader br2 = new BufferedReader(reader2)) {
+		     // watch out with copy-n-paste: don't forget to append a '2' to
+		     // all references of 'stream', 'reader' and 'br'. I got bit by
+		     // that.
+		     InputStream stream2 = this.getClass().getResourceAsStream(OTHER_RESOURCE_TXT);
+		     InputStreamReader reader2 = new InputStreamReader(stream2, StandardCharsets.UTF_8);
+		     BufferedReader br2 = new BufferedReader(reader2)) {
 
 			assertEquals("resource contents", br.readLine());
 			assertEquals("other resource contents", br2.readLine());
@@ -94,8 +94,8 @@ public class ScopeTests {
 	 */
 	BufferedReader brokenGetReader(String filename) throws IOException {
 		try (InputStream stream = this.getClass().getResourceAsStream(filename);
-			 InputStreamReader reader = new InputStreamReader(stream, StandardCharsets.UTF_8);
-			 BufferedReader br = new BufferedReader(reader)) {
+		     InputStreamReader reader = new InputStreamReader(stream, StandardCharsets.UTF_8);
+		     BufferedReader br = new BufferedReader(reader)) {
 			return br;
 		}
 	}
@@ -110,7 +110,7 @@ public class ScopeTests {
 	@Test
 	public void testBrokenGetReader() throws IOException {
 		try (BufferedReader br = brokenGetReader(RESOURCE_TXT);
-			 BufferedReader br2 = brokenGetReader(OTHER_RESOURCE_TXT)) {
+		     BufferedReader br2 = brokenGetReader(OTHER_RESOURCE_TXT)) {
 
 			try {
 				assertEquals("resource contents", br.readLine());
@@ -145,7 +145,7 @@ public class ScopeTests {
 	@Test
 	public void testUnsafeGetReader() throws IOException {
 		try (BufferedReader br = unsafeGetReader(RESOURCE_TXT);
-			 BufferedReader br2 = unsafeGetReader(OTHER_RESOURCE_TXT)) {
+		     BufferedReader br2 = unsafeGetReader(OTHER_RESOURCE_TXT)) {
 
 			assertEquals("resource contents", br.readLine());
 			assertEquals("other resource contents", br2.readLine());
@@ -235,8 +235,9 @@ public class ScopeTests {
 			// Ensure to close any resources that may have been allocated before
 			// the failure; do the checks & cleanup in the reverse order they
 			// may have been allocated.
+			//noinspection EmptyTryBlock
 			try (InputStream streamToClose = stream;
-				 InputStreamReader readerToClose = reader) {
+			     InputStreamReader readerToClose = reader) {
 				// no-op, just close the resources
 			} catch (IOException e2) {
 				e.addSuppressed(e2);
@@ -338,7 +339,7 @@ public class ScopeTests {
 	@Test
 	public void testEasyGetReader() throws IOException {
 		try (BufferedReader br = easyGetReader(RESOURCE_TXT, newBufferedReader);
-			 BufferedReader br2 = easyGetReader(OTHER_RESOURCE_TXT, newBufferedReader)) {
+		     BufferedReader br2 = easyGetReader(OTHER_RESOURCE_TXT, newBufferedReader)) {
 
 			assertEquals("resource contents", br.readLine());
 			assertEquals("other resource contents", br2.readLine());
@@ -383,15 +384,16 @@ public class ScopeTests {
 		BufferedReader br2;
 
 		UnsafeReadersWrapper(NewBufferedReader bufferedReaderFactory1,
-							 NewBufferedReader bufferedReaderFactory2) {
+		                     NewBufferedReader bufferedReaderFactory2) {
 			this.br = easyGetReader(RESOURCE_TXT, bufferedReaderFactory1);
 			this.br2 = easyGetReader(OTHER_RESOURCE_TXT, bufferedReaderFactory2);
 		}
 
 		@Override
 		public void close() throws IOException {
+			//noinspection EmptyTryBlock
 			try (BufferedReader thisBr = this.br;
-				 BufferedReader thisBr2 = this.br2) {
+			     BufferedReader thisBr2 = this.br2) {
 				// no-op, just close the resources
 			}
 		}
@@ -450,7 +452,7 @@ public class ScopeTests {
 		BufferedReader br2;
 
 		UglyReadersWrapper(NewBufferedReader bufferedReaderFactory1,
-						   NewBufferedReader bufferedReaderFactory2) {
+		                   NewBufferedReader bufferedReaderFactory2) {
 			try {
 				this.br = easyGetReader(RESOURCE_TXT, bufferedReaderFactory1);
 				try {
@@ -477,8 +479,9 @@ public class ScopeTests {
 
 		@Override
 		public void close() throws IOException {
+			//noinspection EmptyTryBlock
 			try (BufferedReader thisBr = this.br;
-				 BufferedReader thisBr2 = this.br2) {
+			     BufferedReader thisBr2 = this.br2) {
 				// no-op, just close the resources
 			}
 		}
@@ -528,7 +531,7 @@ public class ScopeTests {
 		final WrapperScope resources;
 
 		EasyReadersWrapper(NewBufferedReader bufferedReaderFactory1,
-						   NewBufferedReader bufferedReaderFactory2) {
+		                   NewBufferedReader bufferedReaderFactory2) {
 			try (CollectScope s = CollectScope.getNew()) {
 				this.br = s.add(easyGetReader(RESOURCE_TXT, bufferedReaderFactory1));
 				this.br2 = s.add(easyGetReader(OTHER_RESOURCE_TXT, bufferedReaderFactory2));
