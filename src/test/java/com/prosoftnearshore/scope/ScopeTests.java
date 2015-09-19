@@ -24,7 +24,6 @@ import org.mockito.stubbing.Answer;
 import javax.annotation.Nullable;
 import java.io.*;
 import java.nio.charset.StandardCharsets;
-import java.util.function.Function;
 
 import static org.junit.Assert.*;
 import static org.mockito.Mockito.*;
@@ -108,6 +107,9 @@ public class ScopeTests {
 	 * @throws IOException
 	 */
 	@Test
+	@SuppressWarnings("try")
+	// Compiler warns that br and/or br2 are not used in the try block.
+	// This is also suppressed in other methods in this file.
 	public void testBrokenGetReader() throws IOException {
 		try (BufferedReader br = brokenGetReader(RESOURCE_TXT);
 		     BufferedReader br2 = brokenGetReader(OTHER_RESOURCE_TXT)) {
@@ -179,6 +181,7 @@ public class ScopeTests {
 	 * @throws IOException
 	 */
 	@Test
+	@SuppressWarnings("try")
 	public void testThatUnsafeDoesNotCloseResources() throws IOException {
 		NewBufferedReader evilReaderFactory = mock(NewBufferedReader.class);
 		when(evilReaderFactory.apply(Matchers.<Reader>any())).thenThrow(new RuntimeException());
@@ -194,7 +197,8 @@ public class ScopeTests {
 	/**
 	 * A functional interface for the BufferedReader factory method.
 	 */
-	interface NewBufferedReader extends Function<Reader, BufferedReader> {
+	interface NewBufferedReader {
+		BufferedReader apply(Reader reader);
 	}
 
 	static final NewBufferedReader newBufferedReader = new NewBufferedReader() {
@@ -204,6 +208,7 @@ public class ScopeTests {
 		}
 	};
 
+	@SuppressWarnings("try")
 	private static void assertThatLeakedTheReaderPassedTo(
 			final NewBufferedReader mockedReaderFactory) throws IOException {
 		ArgumentCaptor<InputStreamReader> readerArgument = ArgumentCaptor
@@ -223,7 +228,7 @@ public class ScopeTests {
 	 * though, is code that is not so pretty.
 	 */
 
-	@SuppressWarnings("resource")
+	@SuppressWarnings("try")
 	BufferedReader uglyGetReader(String filename, NewBufferedReader newReader) {
 		InputStream stream = null;
 		InputStreamReader reader = null;
@@ -255,6 +260,7 @@ public class ScopeTests {
 	 */
 
 	@Test
+	@SuppressWarnings("try")
 	public void testThatUglyClosesResources() throws IOException {
 		NewBufferedReader evilReaderFactory = mock(NewBufferedReader.class);
 		when(evilReaderFactory.apply(Matchers.<Reader>any())).thenThrow(new RuntimeException());
@@ -267,6 +273,7 @@ public class ScopeTests {
 
 	}
 
+	@SuppressWarnings("try")
 	private static void assertThatIsClosedTheReaderPassedTo(
 			final NewBufferedReader factoryMock) {
 		ArgumentCaptor<InputStreamReader> readerArgument = ArgumentCaptor
@@ -290,7 +297,7 @@ public class ScopeTests {
 	 * final resource to work with. At the same time, through all this
 	 * initialization process, any failure or exception should trigger the
 	 * closing of the last successfully initialized resource. *
-	 * <p>
+	 * <p/>
 	 * {@code ChainScope} works by temporarily hooking in (owning) a resource.
 	 * The hooked resource is then passed to the initialization of the next
 	 * resource, which is then immediately hooked in by the scope. The process
@@ -299,7 +306,7 @@ public class ScopeTests {
 	 * the scope so that it can be safely returned by the function (i.e. the
 	 * resource survives outside the initializing scope so that it can be
 	 * attached into the {@code try-with-resources} block of the caller).
-	 * <p>
+	 * <p/>
 	 * However, if the scope prematurely closes before releasing the last hooked
 	 * resource in the chain (as is the case when an exception is thrown along
 	 * the way), then the scope, being itself a resource attached to a
@@ -307,7 +314,7 @@ public class ScopeTests {
 	 * of the last hooked resource, which should be enough to trigger the
 	 * release of all the resources in the chain that were successfully
 	 * initialized.
-	 * <p>
+	 * <p/>
 	 * So, in general, exception-safe functions abstracting the
 	 * chained-initialization pattern of resources can be easily written as
 	 * follows:
@@ -355,6 +362,7 @@ public class ScopeTests {
 	 * @throws IOException
 	 */
 	@Test
+	@SuppressWarnings("try")
 	public void testThatEasyClosesResources() throws IOException {
 		NewBufferedReader evilReaderFactory = mock(NewBufferedReader.class);
 		when(evilReaderFactory.apply(Matchers.<Reader>any())).thenThrow(new RuntimeException());
@@ -373,7 +381,7 @@ public class ScopeTests {
 	 * quite likely, will be a) initializing the inner resources in its
 	 * constructor and b) will have to ensure they're all closed when its close
 	 * method is called.
-	 * <p>
+	 * <p/>
 	 * But it is not enough to close the resources when {@link #close()} is
 	 * called: if the constructor can throw, in particular, it should be very
 	 * careful of not leaking resources that may have been initialized just
@@ -390,6 +398,7 @@ public class ScopeTests {
 		}
 
 		@Override
+		@SuppressWarnings("try")
 		public void close() throws IOException {
 			//noinspection EmptyTryBlock
 			try (BufferedReader thisBr = this.br;
@@ -407,6 +416,7 @@ public class ScopeTests {
 	 * @throws IOException
 	 */
 	@Test
+	@SuppressWarnings("try")
 	public void testThatUnsafeWrapperLeaks() throws IOException {
 		NewBufferedReader goodReaderFactory = mock(NewBufferedReader.class);
 		when(goodReaderFactory.apply(Matchers.<Reader>any())).then(returnNewBufferedReader());
@@ -478,6 +488,7 @@ public class ScopeTests {
 		}
 
 		@Override
+		@SuppressWarnings("try")
 		public void close() throws IOException {
 			//noinspection EmptyTryBlock
 			try (BufferedReader thisBr = this.br;
@@ -498,6 +509,7 @@ public class ScopeTests {
 	 */
 
 	@Test
+	@SuppressWarnings("try")
 	public void testThatUglyWrapperClosesResources() throws IOException {
 		NewBufferedReader goodReaderFactory = mock(NewBufferedReader.class);
 		when(goodReaderFactory.apply(Matchers.<Reader>any())).then(returnNewBufferedReader());
@@ -519,7 +531,7 @@ public class ScopeTests {
 	 * rescue: the first one is meant to assist in the writing of the robust
 	 * constructor that will never leak resources even in the presence of
 	 * exceptions.
-	 * <p>
+	 * <p/>
 	 * The second one is a convenience {@code AutoCloseable} that will close all
 	 * the collected resources when it's called, so that all we need to do in
 	 * the {@link #close()} of our wrapper is close it and we'll be done with
@@ -552,6 +564,7 @@ public class ScopeTests {
 	 * the constructor. Once again, scopes made such abstraction easy to write.
 	 */
 	@Test
+	@SuppressWarnings("try")
 	public void testThatEasyWrapperClosesResources() {
 		NewBufferedReader goodReaderFactory = mock(NewBufferedReader.class);
 		when(goodReaderFactory.apply(Matchers.<Reader>any())).then(returnNewBufferedReader());

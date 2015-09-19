@@ -34,12 +34,21 @@ public class WrapperScope implements Scope {
 		return resource;
 	}
 
+	/**
+	 * {@inheritDoc}
+	 * <p/>
+	 * This implementation closes all wrapped resources in the reverse order of how they were added. That is, the last
+	 * resource added is closed first and the first resource added is closed first.
+	 */
 	@Override
+	@SuppressWarnings("try") // Compiler warns that resource is not used in the try block.
 	public void close() throws RuntimeException {
 		if (this.resources.isEmpty())
 			return;
 
-		try (AutoCloseable r = this.resources.remove()) {
+		// Pop the resource at the head and use try-with-resources to ensure it's closed after all other resources
+		try (AutoCloseable ignored = this.resources.remove()) {
+			// close any remaining resources
 			this.close();
 		} catch (RuntimeException e) {
 			throw e;
