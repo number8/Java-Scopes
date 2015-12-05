@@ -38,7 +38,7 @@ public class WrapperScope implements Scope {
 	 * {@inheritDoc}
 	 * <p/>
 	 * This implementation closes all wrapped resources in the reverse order of how they were added. That is, the last
-	 * resource added is closed first and the first resource added is closed first.
+	 * resource added is closed first and the first resource added is closed last.
 	 */
 	@Override
 	@SuppressWarnings("try") // Compiler warns that resource is not used in the try block.
