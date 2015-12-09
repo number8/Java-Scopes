@@ -2,11 +2,41 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.prosoftnearshore</groupId>
-    <artifactId>scope</artifactId>
+    <artifactId>resource-scopes</artifactId>
     <version>0.0.1-SNAPSHOT</version>
-    <name>Java Scopes</name>
-    <description>Classes for abstracting try-with-resources usage patterns.</description>
+    <name>Java Resource Scopes</name>
+    <description>This library provides some classes that, building on Java's try-with-resources language feature for
+        ensuring deterministic allocation and release of resources, facilitate coding certain resource management patterns
+        where try-with-resources alone is not enough. One example is that of wrapping multiple resources in a single
+        auto-closeable object; and another is that of abstracting away in one or more functions the complex
+        initialization of some particular class of resources.</description>
     <url>https://github.com/prosoft-nearshore/Java-Scopes</url>
+    <organization>
+        <name>Prosoft Nearshore</name>
+        <url>https://github.com/prosoft-nearshore</url>
+    </organization>
+    <developers>
+        <developer>
+            <name>Paulo Sequeira</name>
+            <roles>
+                <role>Main developer</role>
+            </roles>
+        </developer>
+        <developer>
+            <name>Mauricio Morales</name>
+            <roles>
+                <role>Reviewer</role>
+            </roles>
+        </developer>
+    </developers>
+    <licenses>
+        <license>
+            <name>Apache License, Version 2.0</name>
+            <url>http://www.apache.org/licenses/LICENSE-2.0</url>
+            <distribution>repo</distribution>
+        </license>
+    </licenses>
+    <inceptionYear>2015</inceptionYear>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -52,7 +82,7 @@
         <dependency>
             <groupId>org.mockito</groupId>
             <artifactId>mockito-core</artifactId>
-            <version>2.0.5-beta</version>
+            <version>2.0.31-beta</version>
             <scope>test</scope>
         </dependency>
         <dependency>
