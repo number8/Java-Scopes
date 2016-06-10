@@ -15,12 +15,20 @@ limitations under the License.
  */
 package com.prosoftnearshore.scope;
 
+/**
+ * Thrown when a checked exception is thrown during the execution of {@link Scope#close()}.
+ * <p>
+ * The checked originally thrown would be accessible through {@link #getCause()} method. If additional exceptions
+ * are thrown while any remaining resources are also attempted to be closed, they all will be
+ * {@linkplain Exception#addSuppressed(Throwable) suppressed}.
+ */
+@SuppressWarnings("WeakerAccess")
 public class CloseException extends RuntimeException {
 
-	private static final long serialVersionUID = 1L;
+    private static final long serialVersionUID = 1L;
 
-	CloseException(Throwable cause) {
-		super(cause);
-	}
+    CloseException(Throwable cause) {
+        super(cause);
+    }
 
 }
