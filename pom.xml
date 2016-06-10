@@ -106,15 +106,6 @@
                             <report>javadoc</report>
                         </reports>
                     </reportSet>
-                    <reportSet>
-                        <id>test-html</id>
-                        <configuration>
-                            <show>private</show>
-                        </configuration>
-                        <reports>
-                            <report>test-javadoc</report>
-                        </reports>
-                    </reportSet>
                 </reportSets>
             </plugin>
         </plugins>
