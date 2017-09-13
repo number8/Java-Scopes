@@ -57,13 +57,13 @@ BufferedReader getReader(String filename, NewBufferedReader newReader) {
 ```
 The purpose of this library is to provide abstractions that greatly simplify the proper coding functions like `getReader`. So, for example, with the use of the `ChainScope` class, `getReader` could be written as follows:
 ```java
-BufferedReader getReader(String filename, NewBufferedReader newReader) {
-	try (ChainScope s = ChainScope.getNew()) {
-		InputStream stream = s.hook(this.getClass().getResourceAsStream(filename));
-		InputStreamReader reader = s.hook(new InputStreamReader(stream, StandardCharsets.UTF_8));
-		BufferedReader br = s.hook(newReader.apply(reader));
-		return s.release(br);
-	}
+BufferedReader newReader(String filename) {
+  try (ChainScope s = ChainScope.getNew()) {
+    InputStream stream = s.hook(this.getClass().getResourceAsStream(filename));
+    InputStreamReader reader = s.hook(new InputStreamReader(stream, StandardCharsets.UTF_8));
+    BufferedReader br = s.hook(new BufferedReader(reader));
+    return s.release(br);
+  }
 }
 ```
 Note that `try-with-resources` could not have been used directly on `stream`, `reader` or `br` above as that would have caused them to be closed upon return from `getReader`. Instead, it is applied to the chain scope instance, which tracks the resources as they're created and only closes them if the scope exits prematurely due to an exception; otherwise, if the function reaches the execution of the `release()` call, then the scope will not close any resource and the function will return a working buffered reader to the caller.

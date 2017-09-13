@@ -18,61 +18,53 @@ package com.prosoftnearshore.scope;
 import java.util.ArrayDeque;
 import java.util.Queue;
 
+@SuppressWarnings("WeakerAccess" /* public API */)
 public class WrapperScope implements Scope {
 
-	/**
-	 * Construct and return a new instance of {@link WrapperScope}.
-	 *
-	 * @return a new instance of {@code WrapperScope}.
-	 */
-	public static WrapperScope getNew() {
-		return new WrapperScope();
-	}
+    /**
+     * Construct and return a new instance of {@link WrapperScope}.
+     *
+     * @return a new instance of {@code WrapperScope}.
+     */
+    public static WrapperScope getNew() {
+        return new WrapperScope();
+    }
 
-	public <T extends AutoCloseable> T add(T resource) {
-		this.resources.add(resource);
-		return resource;
-	}
+    public <T extends AutoCloseable> T add(T resource) {
+        this.resources.add(resource);
+        return resource;
+    }
 
-	/**
-	 * {@inheritDoc}
-	 * <p/>
-	 * This implementation closes all wrapped resources in the reverse order of how they were added. That is, the last
-	 * resource added is closed first and the first resource added is closed last.
-	 */
-	@Override
-	@SuppressWarnings("try") // Compiler warns that resource is not used in the try block.
-	public void close() throws RuntimeException {
-		if (this.resources.isEmpty())
-			return;
+    /**
+     * {@inheritDoc}
+     * <p/>
+     * This implementation closes all wrapped resources in the reverse order of how they were added. That is, the last
+     * resource added is closed first and the first resource added is closed last.
+     */
+    @Override
+    @SuppressWarnings("try") // Compiler warns that resource is not used in the try block.
+    public void close() {
+        if (this.resources.isEmpty())
+            return;
 
-		// Pop the resource at the head and use try-with-resources to ensure it's closed after all other resources
-		try (AutoCloseable ignored = this.resources.remove()) {
-			// close any remaining resources
-			this.close();
-		} catch (RuntimeException e) {
-			throw e;
-		} catch (Exception e) {
-			throw new CloseException(e);
-		}
-	}
+        // Pop the resource at the head and use try-with-resources to ensure it's closed after all other resources
+        try (AutoCloseable ignored = this.resources.remove()) {
+            // close any remaining resources
+            this.close();
+        } catch (RuntimeException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new CloseException(e);
+        }
+    }
 
-	//
-	// Package-Private Members
-	//
-	void swap(WrapperScope other) {
-		Queue<AutoCloseable> t = this.resources;
-		this.resources = other.resources;
-		other.resources = t;
-	}
+    //
+    // Private Members
+    //
+    private final Queue<AutoCloseable> resources = new ArrayDeque<>();
 
-	//
-	// Private Members
-	//
-	private Queue<AutoCloseable> resources = new ArrayDeque<>();
-
-	private WrapperScope() {
-		// hide constructor from API
-	}
+    private WrapperScope() {
+        // hide constructor from API
+    }
 
 }

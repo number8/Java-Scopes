@@ -19,7 +19,7 @@ package com.prosoftnearshore.scope;
  * A resource tied to the scope of a {@code try}-with-resources statement and that manages other resources that are live
  * within the scope of the statement, but for some reason cannot be placed in its resource specification.
  */
-@SuppressWarnings("WeakerAccess")
+@SuppressWarnings("WeakerAccess" /* public API */)
 public interface Scope extends AutoCloseable {
 
     /**
